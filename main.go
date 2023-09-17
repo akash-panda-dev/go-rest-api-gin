@@ -1,15 +1,17 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
+
 	"github.com/gin-gonic/gin"
 )
 
 type album struct {
-	ID string `json:"id"`
-	Title string `json:"title"`
-	Artist string `json:"artist"`
-	Price float64 `json:"price"`
+	ID     string  `json:"id"`
+	Title  string  `json:"title"`
+	Artist string  `json:"artist"`
+	Price  float64 `json:"price"`
 }
 
 // albums slice to seed record album data.
@@ -23,6 +25,12 @@ func getAlbums(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, albums)
 }
 
+func getAlbumss(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(albums)
+
+}
+
 func postAlbums(c *gin.Context) {
 	var newAlbum album
 
@@ -34,21 +42,25 @@ func postAlbums(c *gin.Context) {
 	c.IndentedJSON(http.StatusCreated, newAlbum)
 }
 
-// Write a handler to return a specific item
-// When the client makes a request to GET /albums/[id], you want to return the album whose ID matches the id path parameter.
+func getAlbumsById(c *gin.Context) {
+	id := c.Param("id")
 
-// To do this, you will:
+	for _, v := range albums {
+		if v.ID == id {
+			c.IndentedJSON(http.StatusOK, v)
+			return
+		}
+	}
 
-// Add logic to retrieve the requested album.
-// Map the path to the logic.
+	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "The specified id not found"})
+}
 
 func main() {
 	router := gin.Default()
 	router.GET("/albums", getAlbums)
 	router.POST("/albums", postAlbums)
-
-	router.Run("localhost:8080")
+	router.GET("/albums/:id", getAlbumsById)
+	http.HandleFunc("/albumss", getAlbumss)
+	http.ListenAndServe(":8080", nil)
+	//router.Run("localhost:8080")
 }
-
-
-
